@@ -120,26 +120,28 @@ class MainActivity : AppCompatActivity() {
                 )
 
             cursorWithContacts?.let { cursor ->
-                for(i in 0..cursor.count) {
+                for (i in 0..cursor.count) {
                     if (cursor.moveToPosition(i)) {
                         val name = cursor.getString(
                             cursor.getColumnIndex(
                                 ContactsContract.Contacts.DISPLAY_NAME
                             )
                         )
-                        addView(it, name)
+                        val phone = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))
+                        addView(it, name, phone)
                     }
                 }
-
             }
+            // Закрыть Cursor
+            cursorWithContacts?.close()
         }
 
     }
 
-    private fun addView(context: Context, name: String?) {
+    private fun addView(context: Context, name: String?, phone: String?) {
         binding.containerContacts.addView(AppCompatTextView(context).apply {
-            text = name
-            textSize = resources.getDimension(R.dimen.padding)
+            text = name + "\n" + phone
+            textSize = resources.getDimension(R.dimen.text_size)
         })
     }
 }
