@@ -21,8 +21,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
+    private lateinit var context: Context
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        context = this
 
         //подключение viewBinding
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -36,7 +40,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkPermission() {
         // работает от контекста
-        applicationContext?.let {
+        context.let {
             when {
                 // Разрешение дано
                 ContextCompat.checkSelfPermission(it, android.Manifest.permission.READ_CONTACTS) ==
@@ -46,7 +50,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 // указать поеснение перед подтверждением
                 shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS) -> { // Вызов пояснения, для чего нужен доступ
-                    AlertDialog.Builder(this@MainActivity)
+                    AlertDialog.Builder(it)
                         .setTitle("Доступ к контактам")                  // Задать заголовок окна пояснения
                         .setMessage("Объяснение необходимости доступа")                     // Задать сообщение окна пояснения
                         .setPositiveButton("Предоставить доступ") { _, _ ->              // Задать кнопку и текст кнопки подтверждения
@@ -86,10 +90,10 @@ class MainActivity : AppCompatActivity() {
                     getContacts()
                 } else {
                     // Пояснение пользователю, почему экран остается пустым или дальнейшее действие не доступно
-                    applicationContext?.let {
+                    context?.let {
                         // Вслучае вызова AlertDialog с activity необходимо передать контекст активити,
                         // в ином случае it (контекст, от которого запущен AleartDialog)
-                        AlertDialog.Builder(this@MainActivity)
+                        AlertDialog.Builder(it)
                             .setTitle("Заголовок")
                             .setMessage("Сообщение")
                             .setNegativeButton("Закрыть") { dialog, _ ->
@@ -107,28 +111,22 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("Range")
     private fun getContacts() {
 
-        applicationContext?.let {
+        context.let {
             // Получаем ContactResolver у контакта
             val contactResolver: ContentResolver = it.contentResolver
 
             //Отправляем запрос на получение контактов и получаем ответ  в виде Cursor
             val cursorWithContacts: Cursor? = contactResolver
-                .query(
-                    ContactsContract.Contacts.CONTENT_URI,
-                    null, null, null,
-                    ContactsContract.Contacts.DISPLAY_NAME + " ASC"
-                )
+                .query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null)
 
             cursorWithContacts?.let { cursor ->
                 for (i in 0..cursor.count) {
                     if (cursor.moveToPosition(i)) {
-                        val name = cursor.getString(
-                            cursor.getColumnIndex(
-                                ContactsContract.Contacts.DISPLAY_NAME
-                            )
-                        )
-                        val phone = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))
-                        addView(it, name, phone)
+                        val uid = cursor.getLong(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID))
+                        val name = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME))
+                        val photo = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI))
+                        val number = cursor?.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
+                        addView(it, uid, name, number, photo)
                     }
                 }
             }
@@ -138,9 +136,9 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun addView(context: Context, name: String?, phone: String?) {
+    private fun addView(context: Context, uid: Long, name: String?, phone: String?, photo: String?) {
         binding.containerContacts.addView(AppCompatTextView(context).apply {
-            text = name + "\n" + phone
+            text = (uid.toString() + " " + name + "\n" + phone + "\n" + photo)
             textSize = resources.getDimension(R.dimen.text_size)
         })
     }
