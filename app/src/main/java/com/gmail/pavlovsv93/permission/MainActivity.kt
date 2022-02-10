@@ -4,11 +4,14 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat
@@ -137,9 +140,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addView(context: Context, uid: Long, name: String?, phone: String?, photo: String?) {
-        binding.containerContacts.addView(AppCompatTextView(context).apply {
+        binding.containerContacts.addView(Button(context).apply {
             text = (uid.toString() + " " + name + "\n" + phone + "\n" + photo)
             textSize = resources.getDimension(R.dimen.text_size)
+            setOnClickListener {
+                val intentR = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intentR);
+                }
+            }
         })
     }
 }
